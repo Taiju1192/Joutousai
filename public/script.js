@@ -11,87 +11,145 @@ const textSamples = [
   "好きな音楽を聞きながらタイピングする人もいます"
 ];
 
+let tokenizer;
 let currentJapanese = '';
 let currentRomaji = '';
-let inputLength = 0;
+let romajiChars = [];
+let userInput = '';
+let currentIndex = 0;
 let timer;
 let timeLimit = 30;
 
-function startGame() {
-  resetState();
-
-  currentJapanese = textSamples[Math.floor(Math.random() * textSamples.length)];
-  const noPeriod = currentJapanese.replace(/。/g, ''); // 「。」削除
-  currentRomaji = wanakana.toRomaji(noPeriod);
-  
-  document.getElementById("displayJapanese").textContent = noPeriod;
-  updateRomajiDisplay();
-
-  startTimer();
-  document.getElementById("inputArea").addEventListener('input', onInput);
+function loadTokenizerAndStart() {
+  kuromoji.builder({ dicPath: "https://unpkg.com/kuromoji/dict/" }).build(function (err, tk) {
+    if (err) {
+      alert("形態素解析器の読み込みに失敗しました");
+      return;
+    }
+    tokenizer = tk;
+    startGame();
+  });
 }
 
-function resetState() {
+document.getElementById("startButton").addEventListener("click", loadTokenizerAndStart);
+
+document.getElementById("retryButton").addEventListener("click", loadTokenizerAndStart);
+
+function convertToRomajiArray(text) {
+  const tokens = tokenizer.tokenize(text);
+  const romaji = [];
+  for (let token of tokens) {
+    let kana = token.reading || token.surface_form;
+    let hira = wanakana.toHiragana(kana);
+    for (let char of hira) {
+      const r = getRomajiVariants(char);
+      romaji.push(r);
+    }
+  }
+  return romaji;
+}
+
+function getRomajiVariants(kana) {
+  const variants = {
+    'し': ['shi', 'si'],
+    'ち': ['chi', 'ti'],
+    'つ': ['tsu', 'tu'],
+    'ふ': ['fu', 'hu'],
+    'じ': ['ji', 'zi'],
+    'ぢ': ['ji', 'di'],
+    'づ': ['zu', 'du'],
+    'っ': ['xtsu', 'ltu', 'ltsu', 'xtu', 'ttu'],
+    'ぁ': ['la', 'xa'],
+    'ぃ': ['li', 'xi'],
+    'ぅ': ['lu', 'xu'],
+    'ぇ': ['le', 'xe'],
+    'ぉ': ['lo', 'xo'],
+    'ゃ': ['lya', 'xya'],
+    'ゅ': ['lyu', 'xyu'],
+    'ょ': ['lyo', 'xyo']
+  };
+  return variants[kana] || [wanakana.toRomaji(kana)];
+}
+
+function startGame() {
   clearInterval(timer);
-  inputLength = 0;
+  currentJapanese = textSamples[Math.floor(Math.random() * textSamples.length)];
+  document.getElementById("displayJapanese").textContent = currentJapanese;
+  romajiChars = convertToRomajiArray(currentJapanese);
+  currentRomaji = romajiChars.flat()[0];
+  userInput = '';
+  currentIndex = 0;
   document.getElementById("inputArea").value = '';
-  document.getElementById("romajiDisplay").innerHTML = '';
+  document.getElementById("inputArea").disabled = false;
   document.getElementById("resultMessage").textContent = '';
-  document.getElementById("time").textContent = timeLimit;
-  document.getElementById("wpm").textContent = '-';
-  document.getElementById("accuracy").textContent = '-';
   document.getElementById("retryButton").style.display = 'none';
+  updateRomajiDisplay();
+  startTimer();
+  document.getElementById("inputArea").focus();
+  document.getElementById("inputArea").addEventListener("input", onInput);
+}
+
+function updateRomajiDisplay() {
+  let typed = '';
+  let remaining = '';
+  for (let i = 0; i < romajiChars.length; i++) {
+    const options = romajiChars[i];
+    const displayChar = options[0];
+    if (i < currentIndex) {
+      typed += `<span class="typed">${displayChar}</span>`;
+    } else {
+      remaining += displayChar;
+    }
+  }
+  document.getElementById("romajiDisplay").innerHTML = typed + remaining;
+}
+
+function onInput() {
+  const input = document.getElementById("inputArea").value.trim().toLowerCase();
+  let i = 0;
+  let idx = 0;
+  while (idx < romajiChars.length && i < input.length) {
+    const options = romajiChars[idx];
+    let matched = false;
+    for (let option of options) {
+      if (input.startsWith(option, i)) {
+        i += option.length;
+        idx++;
+        matched = true;
+        break;
+      }
+    }
+    if (!matched) break;
+  }
+  currentIndex = idx;
+  updateRomajiDisplay();
+  if (idx === romajiChars.length && i === input.length) {
+    clearInterval(timer);
+    gameSuccess();
+  }
 }
 
 function startTimer() {
   let timeLeft = timeLimit;
   document.getElementById("time").textContent = timeLeft;
-
   timer = setInterval(() => {
     timeLeft--;
     document.getElementById("time").textContent = timeLeft;
-
     if (timeLeft <= 0) {
       clearInterval(timer);
-      gameOver(false);
+      gameOver();
     }
   }, 1000);
 }
 
-function updateRomajiDisplay() {
-  const typed = `<span class="typed">${currentRomaji.slice(0, inputLength)}</span>`;
-  const remaining = currentRomaji.slice(inputLength);
-  document.getElementById("romajiDisplay").innerHTML = typed + remaining;
+function gameSuccess() {
+  document.getElementById("accuracy").textContent = '100';
+  document.getElementById("wpm").textContent = Math.round(romajiChars.flat().join('').length / 5 / (timeLimit - parseInt(document.getElementById("time").textContent)) * 60);
+  setTimeout(startGame, 1000);
 }
 
-function onInput() {
-  const userInput = document.getElementById("inputArea").value.toLowerCase();
-
-  if (!currentRomaji.startsWith(userInput)) {
-    document.getElementById("inputArea").style.backgroundColor = '#ffe5e5';
-  } else {
-    document.getElementById("inputArea").style.backgroundColor = '#fff8f0';
-    inputLength = userInput.length;
-    updateRomajiDisplay();
-
-    if (userInput === currentRomaji) {
-      clearInterval(timer);
-      gameOver(true);
-    }
-  }
-}
-
-function gameOver(success) {
-  document.getElementById("inputArea").removeEventListener('input', onInput);
-
-  if (success) {
-    const elapsed = timeLimit - parseInt(document.getElementById("time").textContent);
-    const wpm = Math.round((currentRomaji.length / 5) / (elapsed / 60));
-    document.getElementById("wpm").textContent = wpm;
-    document.getElementById("accuracy").textContent = '100';
-    setTimeout(startGame, 1000); // 自動で次へ
-  } else {
-    document.getElementById("resultMessage").textContent = "時間切れです！";
-    document.getElementById("retryButton").style.display = 'inline-block';
-  }
+function gameOver() {
+  document.getElementById("resultMessage").textContent = "時間切れです！";
+  document.getElementById("retryButton").style.display = 'inline-block';
+  document.getElementById("inputArea").disabled = true;
 }
