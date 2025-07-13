@@ -1,23 +1,34 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>タイピング練習サイト</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ローマ字タイピング練習</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://unpkg.com/wanakana"></script>
 </head>
 <body>
   <main class="container">
-    <h1>タイピング練習</h1>
-    <p id="displayText">ゲームスタートでテキストが表示されます</p>
-    <textarea id="inputArea" placeholder="ここにタイピングしてください..." autofocus></textarea>
+    <h1>ローマ字タイピング練習</h1>
+
+    <p id="displayJapanese">ゲームスタートで日本語が表示されます</p>
+    <p id="displayRomaji" style="font-weight: bold; color: #666;"></p>
+
+    <textarea
+      id="inputArea"
+      placeholder="ローマ字で入力してください..."
+      autofocus
+    ></textarea>
+
     <div id="status">
       <p>正確さ: <span id="accuracy">-</span>%</p>
       <p>WPM: <span id="wpm">-</span></p>
       <p>経過時間: <span id="time">0</span> 秒</p>
     </div>
+
     <button onclick="startGame()">ゲームスタート</button>
   </main>
+
   <script src="script.js"></script>
 </body>
 </html>
