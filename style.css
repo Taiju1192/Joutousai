@@ -1,0 +1,15 @@
+body {
+  background-color: #f5f5f5;
+  padding-bottom: 50px;
+}
+
+img {
+  border-radius: 8px;
+  max-width: 100%;
+  height: auto;
+  margin-top: 1rem;
+}
+
+h2, h3 {
+  color: #003366;
+}
