@@ -34,7 +34,7 @@ h1 {
   margin-bottom: 1rem;
   font-family: monospace;
   color: #aaa;
-  word-break: break-all;
+  word-break: break-word;
 }
 
 .romaji-guide span.typed {
