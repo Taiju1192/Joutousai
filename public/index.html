@@ -6,29 +6,23 @@
   <title>ローマ字タイピング練習</title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://unpkg.com/wanakana"></script>
+  <script src="https://unpkg.com/kuromoji/build/kuromoji.js"></script>
 </head>
 <body>
   <main class="container">
     <h1>ローマ字タイピング練習</h1>
-
     <p id="displayJapanese">ゲームスタートで日本語が表示されます</p>
-
     <div id="romajiDisplay" class="romaji-guide"></div>
-
     <textarea id="inputArea" placeholder="ローマ字で入力してください..." autofocus></textarea>
-
     <div id="status">
       <p>残り時間: <span id="time">30</span> 秒</p>
       <p>WPM: <span id="wpm">-</span></p>
       <p>正確さ: <span id="accuracy">-</span>%</p>
     </div>
-
     <button id="startButton" onclick="startGame()">ゲームスタート</button>
     <button id="retryButton" onclick="startGame()" style="display:none;">もう一度</button>
-
     <p id="resultMessage"></p>
   </main>
-
   <script src="script.js"></script>
 </body>
 </html>
