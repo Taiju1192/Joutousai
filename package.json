@@ -2,9 +2,15 @@
   "name": "bunkasai-tshirt",
   "version": "1.0.0",
   "description": "文化祭クラスTシャツ実行委員の紹介サイト",
-  "main": "public/script.js",
+  "main": "server.js",
   "scripts": {
-    "start": "echo 'This is a static site and does not require a start script.'"
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "engines": {
+    "node": ">=14.0.0"
   },
   "license": "MIT"
 }
