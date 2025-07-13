@@ -1,68 +1,97 @@
 const textSamples = [
-  "今日はいい天気ですね。",
-  "プログラミングを練習しよう。",
-  "明日は友達と映画を見に行きます。",
-  "図書館で静かに本を読みましょう。",
-  "早起きは三文の徳と言われています。"
+  "今日はいい天気ですね",
+  "明日友達と遊園地に行きます",
+  "毎日少しずつ練習しましょう",
+  "朝ごはんをしっかり食べましょう",
+  "プログラミングは楽しいです",
+  "漢字も混ざった文章で練習できます",
+  "集中して画面を見つめてください",
+  "タイピングのコツは繰り返しです",
+  "静かな場所で練習すると効果的です",
+  "好きな音楽を聞きながらタイピングする人もいます"
 ];
 
-let startTime;
-let timerInterval;
 let currentJapanese = '';
 let currentRomaji = '';
-
-const customKanaMapping = {
-  しゃ: 'sha', しゅ: 'shu', しょ: 'sho',
-  きゃ: 'kya', きゅ: 'kyu', きょ: 'kyo',
-  ちゃ: 'cha', ちゅ: 'chu', ちょ: 'cho',
-  つ: ['tsu', 'tu'], し: ['shi', 'si'], じ: ['ji', 'zi'],
-  ぁ: ['xa', 'la'], ぃ: ['xi', 'li'], ぅ: ['xu', 'lu'], ぇ: ['xe', 'le'], ぉ: ['xo', 'lo'],
-  っ: ['xtsu', 'ltu', 'ltsu']
-};
+let inputLength = 0;
+let timer;
+let timeLimit = 30;
 
 function startGame() {
+  resetState();
+
   currentJapanese = textSamples[Math.floor(Math.random() * textSamples.length)];
-  currentRomaji = wanakana.toRomaji(currentJapanese);
+  const noPeriod = currentJapanese.replace(/。/g, ''); // 「。」削除
+  currentRomaji = wanakana.toRomaji(noPeriod);
+  
+  document.getElementById("displayJapanese").textContent = noPeriod;
+  updateRomajiDisplay();
 
-  document.getElementById("displayJapanese").textContent = currentJapanese;
-  document.getElementById("displayRomaji").textContent = currentRomaji;
+  startTimer();
+  document.getElementById("inputArea").addEventListener('input', onInput);
+}
 
+function resetState() {
+  clearInterval(timer);
+  inputLength = 0;
   document.getElementById("inputArea").value = '';
-  document.getElementById("accuracy").textContent = '-';
+  document.getElementById("romajiDisplay").innerHTML = '';
+  document.getElementById("resultMessage").textContent = '';
+  document.getElementById("time").textContent = timeLimit;
   document.getElementById("wpm").textContent = '-';
-  document.getElementById("time").textContent = '0';
-
-  startTime = new Date();
-  if (timerInterval) clearInterval(timerInterval);
-  timerInterval = setInterval(updateTime, 1000);
-
-  document.getElementById("inputArea").addEventListener('input', checkTyping);
+  document.getElementById("accuracy").textContent = '-';
+  document.getElementById("retryButton").style.display = 'none';
 }
 
-function updateTime() {
-  const elapsed = Math.floor((new Date() - startTime) / 1000);
-  document.getElementById("time").textContent = elapsed;
+function startTimer() {
+  let timeLeft = timeLimit;
+  document.getElementById("time").textContent = timeLeft;
+
+  timer = setInterval(() => {
+    timeLeft--;
+    document.getElementById("time").textContent = timeLeft;
+
+    if (timeLeft <= 0) {
+      clearInterval(timer);
+      gameOver(false);
+    }
+  }, 1000);
 }
 
-function checkTyping() {
-  const input = document.getElementById("inputArea").value.trim().toLowerCase();
-  const target = currentRomaji.toLowerCase();
+function updateRomajiDisplay() {
+  const typed = `<span class="typed">${currentRomaji.slice(0, inputLength)}</span>`;
+  const remaining = currentRomaji.slice(inputLength);
+  document.getElementById("romajiDisplay").innerHTML = typed + remaining;
+}
 
-  if (input === target) {
-    clearInterval(timerInterval);
-    const totalTime = (new Date() - startTime) / 1000;
-    const wpm = Math.round((target.length / 5) / (totalTime / 60));
-    const accuracy = Math.round((compareAccuracy(input, target)) * 100);
+function onInput() {
+  const userInput = document.getElementById("inputArea").value.toLowerCase();
 
-    document.getElementById("accuracy").textContent = accuracy;
+  if (!currentRomaji.startsWith(userInput)) {
+    document.getElementById("inputArea").style.backgroundColor = '#ffe5e5';
+  } else {
+    document.getElementById("inputArea").style.backgroundColor = '#fff8f0';
+    inputLength = userInput.length;
+    updateRomajiDisplay();
+
+    if (userInput === currentRomaji) {
+      clearInterval(timer);
+      gameOver(true);
+    }
+  }
+}
+
+function gameOver(success) {
+  document.getElementById("inputArea").removeEventListener('input', onInput);
+
+  if (success) {
+    const elapsed = timeLimit - parseInt(document.getElementById("time").textContent);
+    const wpm = Math.round((currentRomaji.length / 5) / (elapsed / 60));
     document.getElementById("wpm").textContent = wpm;
+    document.getElementById("accuracy").textContent = '100';
+    setTimeout(startGame, 1000); // 自動で次へ
+  } else {
+    document.getElementById("resultMessage").textContent = "時間切れです！";
+    document.getElementById("retryButton").style.display = 'inline-block';
   }
-}
-
-function compareAccuracy(input, target) {
-  let correct = 0;
-  for (let i = 0; i < Math.min(input.length, target.length); i++) {
-    if (input[i] === target[i]) correct++;
-  }
-  return correct / target.length;
 }
