@@ -2,11 +2,9 @@
   "name": "bunkasai-tshirt",
   "version": "1.0.0",
   "description": "文化祭クラスTシャツ実行委員の紹介サイト",
-  "main": "script.js",
+  "main": "public/script.js",
   "scripts": {
-    "start": "deno run --allow-net script.js"
+    "start": "echo 'This is a static site and does not require a start script.'"
   },
-  "keywords": [],
-  "author": "",
   "license": "MIT"
 }
